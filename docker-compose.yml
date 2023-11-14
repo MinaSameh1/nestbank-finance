@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  database:
+    image: 'postgres:latest'
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    networks:
+      - postgres-network
+    volumes:
+      - ./db-data/:/var/lib/postgresql/data/
+      # Left in case I want to populate.
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # In case I don't have access to dbeaver or the like
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - 5150:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@mail.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    depends_on:
+      - database
+    networks:
+      - postgres-network
+    volumes:
+      - ./pgadmin-data/:/var/lib/pgadmin/
+
+networks:
+  postgres-network:
+    driver: bridge
