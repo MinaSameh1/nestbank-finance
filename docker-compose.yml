@@ -18,6 +18,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     ports:
+      # Worst Port I could think of to bind
       - 5150:80
     environment:
       - PGADMIN_DEFAULT_EMAIL=admin@mail.com
@@ -25,8 +26,11 @@ services:
     depends_on:
       - database
     networks:
+      # Use database as hostname to connect to postgres.
       - postgres-network
     volumes:
+      # Don't forget to sudo chown -R 5050:5050 ./pgadmin-data
+      # or else it will fail to bind
       - ./pgadmin-data/:/var/lib/pgadmin/
 
 networks:
