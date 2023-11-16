@@ -35,7 +35,8 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 # Docker and db
-db-data/*
+/db-data
+/pgadmin-data
 
 # .env 
 .env
