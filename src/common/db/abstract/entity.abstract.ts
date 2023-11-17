@@ -13,13 +13,13 @@ export abstract class AbstractEntity {
 
   @CreateDateColumn({ type: 'timestamp' })
   @ApiProperty({ example: '2021-01-01T00:00:00.000Z' })
-  created: Date
+  created_at: Date
 
   @UpdateDateColumn({ type: 'timestamp' })
   @ApiProperty({ example: '2021-01-01T00:00:00.000Z' })
-  updated: Date
+  updated_at: Date
 
   @DeleteDateColumn({ type: 'timestamp' })
   @ApiProperty({ example: '2021-01-01T00:00:00.000Z' })
-  deleted: Date
+  deleted_at: Date | null
 }
