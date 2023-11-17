@@ -1,2 +1,2 @@
-export * from './paginate.type';
-export * from './paginated.response.type';
+export * from './paginate.type'
+export * from './paginated.response.type'

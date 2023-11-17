@@ -1,18 +1,18 @@
-import { HttpStatus, Type, applyDecorators } from '@nestjs/common';
+import { HttpStatus, Type, applyDecorators } from '@nestjs/common'
 import {
-  ApiResponse,
-  ApiUnauthorizedResponse,
-  ApiForbiddenResponse,
-  ApiMethodNotAllowedResponse,
-  ApiOperation,
   ApiCreatedResponse,
   ApiExtraModels,
+  ApiForbiddenResponse,
+  ApiMethodNotAllowedResponse,
   ApiOkResponse,
-  getSchemaPath,
+  ApiOperation,
   ApiQuery,
-} from '@nestjs/swagger';
-import { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
-import { PaginatedDto } from '../types';
+  ApiResponse,
+  ApiUnauthorizedResponse,
+  getSchemaPath,
+} from '@nestjs/swagger'
+import { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
+import { PaginatedDto } from '../types'
 
 const defaultDecorators = [
   ApiResponse({
@@ -26,7 +26,7 @@ const defaultDecorators = [
   ApiMethodNotAllowedResponse({
     description: 'Cannot Do this action on this resource.',
   }),
-];
+]
 
 /**
  * @description Decorator to document the endpoint with Swagger
@@ -51,47 +51,49 @@ const defaultDecorators = [
  *  })
  *  findAllController() { ... }
  */
-export function SwaggerDocumentation({
-  summary,
-  description,
-  okDescription,
-  badRequestDescription,
-  badStatus = HttpStatus.BAD_REQUEST,
-  status = HttpStatus.OK,
-  deprecated = false,
-  paginated = false,
-  okType,
-  okSchema = null,
-  okProperties = {},
-}:
-  | {
-      summary: string;
-      description?: string;
-      okDescription: string;
-      badRequestDescription?: string;
-      badStatus?: number;
-      status?: number;
-      deprecated?: boolean;
-      paginated?: false;
-      // eslint-disable-next-line @typescript-eslint/ban-types
-      okType?: Type | [Type] | string | Function | [Function];
-      okSchema?: SchemaObject;
-      okProperties?: any;
-    }
-  | {
-      summary: string;
-      description?: string;
-      okDescription: string;
-      badStatus?: number;
-      badRequestDescription?: string;
-      deprecated?: boolean;
-      status?: number;
-      paginated: true;
-      // eslint-disable-next-line @typescript-eslint/ban-types
-      okType: Type | Function | string;
-      okSchema?: null;
-      okProperties?: any;
-    }): MethodDecorator {
+export function SwaggerDocumentation(
+  {
+    summary,
+    description,
+    okDescription,
+    badRequestDescription,
+    badStatus = HttpStatus.BAD_REQUEST,
+    status = HttpStatus.OK,
+    deprecated = false,
+    paginated = false,
+    okType,
+    okSchema = null,
+    okProperties = {},
+  }:
+    | {
+        summary: string
+        description?: string
+        okDescription: string
+        badRequestDescription?: string
+        badStatus?: number
+        status?: number
+        deprecated?: boolean
+        paginated?: false
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        okType?: Type | [Type] | string | Function | [Function]
+        okSchema?: SchemaObject
+        okProperties?: any
+      }
+    | {
+        summary: string
+        description?: string
+        okDescription: string
+        badStatus?: number
+        badRequestDescription?: string
+        deprecated?: boolean
+        status?: number
+        paginated: true
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        okType: Type | Function | string
+        okSchema?: null
+        okProperties?: any
+      },
+): MethodDecorator {
   if (status === HttpStatus.CREATED)
     return applyDecorators(
       ApiOperation({ summary, description, deprecated }),
@@ -107,7 +109,7 @@ export function SwaggerDocumentation({
         description: badRequestDescription,
       }),
       ...defaultDecorators,
-    );
+    )
   if (paginated)
     return applyDecorators(
       ApiOperation({ summary, description, deprecated }),
@@ -136,7 +138,7 @@ export function SwaggerDocumentation({
         description: badRequestDescription,
       }),
       ...defaultDecorators,
-    );
+    )
   return applyDecorators(
     ApiOperation({ summary, description, deprecated }),
     ApiOkResponse({
@@ -151,7 +153,7 @@ export function SwaggerDocumentation({
       description: badRequestDescription,
     }),
     ...defaultDecorators,
-  );
+  )
 }
 
 /**
@@ -174,5 +176,5 @@ export function SwaggerDocumentationPaginationQuery(): MethodDecorator {
       example: 10,
       description: 'How many items to recieve',
     }),
-  );
+  )
 }

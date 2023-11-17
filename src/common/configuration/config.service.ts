@@ -1,39 +1,39 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common'
+import { ConfigService as InitConfigService } from '@nestjs/config'
 
 @Injectable()
 export class CustomConfigService {
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: InitConfigService) {}
 
   get<T>(key: string, def?: T): T {
-    return this.configService.get<T>(key) || (def as T);
+    return this.configService.get<T>(key) || (def as T)
   }
 
   getPort(): string {
-    return this.get<string>('PORT', '8000');
+    return this.get<string>('PORT', '8000')
   }
 
   getAppEnv(): string {
-    return this.get<string>('APP_ENV', 'PROD');
+    return this.get<string>('APP_ENV', 'PROD')
   }
 
   isDev(): boolean {
-    return this.getAppEnv() === 'DEV';
+    return this.getAppEnv() === 'DEV'
   }
 
   getDbHost() {
-    return this.get('DB_HOST', 'localhost');
+    return this.get('DB_HOST', 'localhost')
   }
   getDbPort() {
-    return this.get('DB_PORT', '5432');
+    return this.get('DB_PORT', '5432')
   }
   getDbUsername() {
-    return this.get('DB_USERNAME', 'postgres');
+    return this.get('DB_USERNAME', 'postgres')
   }
   getDbPassword() {
-    return this.get('DB_PASSWORD', 'postgres');
+    return this.get('DB_PASSWORD', 'postgres')
   }
   getDbDatabase() {
-    return this.get('DB_DATABASE', 'postgres');
+    return this.get('DB_DATABASE', 'postgres')
   }
 }

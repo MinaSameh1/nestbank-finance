@@ -1,10 +1,10 @@
-import { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import helmet from 'helmet';
+import { INestApplication } from '@nestjs/common'
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import helmet from 'helmet'
 
 export const setUpHelmet = (app: INestApplication) => {
-  app.use(helmet());
-};
+  app.use(helmet())
+}
 
 export const setUpSwagger = (app: INestApplication, port = 3000) => {
   const config = new DocumentBuilder()
@@ -14,8 +14,8 @@ export const setUpSwagger = (app: INestApplication, port = 3000) => {
     )
     .setVersion('1.0')
     .addServer(`http://localhost:${port}`, 'Local Env') // append at the end
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
+    .build()
+  const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('docs', app, document, {
     jsonDocumentUrl: '/docs-json',
     yamlDocumentUrl: '/docs-yaml',
@@ -23,5 +23,5 @@ export const setUpSwagger = (app: INestApplication, port = 3000) => {
     swaggerOptions: {
       displayOperationId: true,
     },
-  });
-};
+  })
+}
