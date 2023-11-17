@@ -51,47 +51,49 @@ const defaultDecorators = [
  *  })
  *  findAllController() { ... }
  */
-export function SwaggerDocumentation({
-  summary,
-  description,
-  okDescription,
-  badRequestDescription,
-  badStatus = HttpStatus.BAD_REQUEST,
-  status = HttpStatus.OK,
-  deprecated = false,
-  paginated = false,
-  okType,
-  okSchema = null,
-  okProperties = {},
-}:
-  | {
-      summary: string
-      description?: string
-      okDescription: string
-      badRequestDescription?: string
-      badStatus?: number
-      status?: number
-      deprecated?: boolean
-      paginated?: false
-      // eslint-disable-next-line @typescript-eslint/ban-types
-      okType?: Type | [Type] | string | Function | [Function]
-      okSchema?: SchemaObject
-      okProperties?: any
-    }
-  | {
-      summary: string
-      description?: string
-      okDescription: string
-      badStatus?: number
-      badRequestDescription?: string
-      deprecated?: boolean
-      status?: number
-      paginated: true
-      // eslint-disable-next-line @typescript-eslint/ban-types
-      okType: Type | Function | string
-      okSchema?: null
-      okProperties?: any
-    }): MethodDecorator {
+export function SwaggerDocumentation(
+  {
+    summary,
+    description,
+    okDescription,
+    badRequestDescription,
+    badStatus = HttpStatus.BAD_REQUEST,
+    status = HttpStatus.OK,
+    deprecated = false,
+    paginated = false,
+    okType,
+    okSchema = null,
+    okProperties = {},
+  }:
+    | {
+        summary: string
+        description?: string
+        okDescription: string
+        badRequestDescription?: string
+        badStatus?: number
+        status?: number
+        deprecated?: boolean
+        paginated?: false
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        okType?: Type | [Type] | string | Function | [Function]
+        okSchema?: SchemaObject
+        okProperties?: any
+      }
+    | {
+        summary: string
+        description?: string
+        okDescription: string
+        badStatus?: number
+        badRequestDescription?: string
+        deprecated?: boolean
+        status?: number
+        paginated: true
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        okType: Type | Function | string
+        okSchema?: null
+        okProperties?: any
+      },
+): MethodDecorator {
   if (status === HttpStatus.CREATED)
     return applyDecorators(
       ApiOperation({ summary, description, deprecated }),
