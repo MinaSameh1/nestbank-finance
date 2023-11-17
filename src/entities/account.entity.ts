@@ -13,6 +13,7 @@ export class Account extends AbstractEntity {
 
   @OneToMany(() => Transaction, transaction => transaction.account)
   transactions: Transaction[]
+
   static fromPartial(data: DeepPartial<Account>): Account {
     return Object.assign(new Account(), data)
   }
