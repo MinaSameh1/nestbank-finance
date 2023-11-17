@@ -4,7 +4,7 @@ export const swaggerCustomJs = (baseUrl: string, logoUrl: string) => `
         setTimeout(function () {
             // Section 01 - Set url link 
             var logo = document.getElementsByClassName('link');
-            logo[0].href = "${baseUrl}}";
+            logo[0].href = "${baseUrl}";
             logo[0].target = "_blank"; 
  
             // Section 02 - Set logo

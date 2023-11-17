@@ -1,7 +1,16 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  VERSION_NEUTRAL,
+} from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 
-@Controller('server')
+@Controller({
+  version: VERSION_NEUTRAL,
+  path: 'server',
+})
 @ApiTags('server')
 export class ServerController {
   @ApiOperation({ summary: 'Health check', description: 'Health check' })

@@ -4,12 +4,18 @@ import helmet from 'helmet'
 import { swaggerCustomCss, swaggerCustomJs } from './swagger'
 
 export const setUpHelmet = (app: INestApplication) => {
-  app.use(helmet())
+  app.use(
+    helmet({
+      crossOriginEmbedderPolicy: false,
+      contentSecurityPolicy: false,
+    }),
+  )
+  return app
 }
 
 export const setUpSwagger = (app: INestApplication, port = 3000) => {
-  const baseUrl = ''
-  const logoUrl = ''
+  const baseUrl = 'https://www.linkedin.com/company/owais-capital'
+  const logoUrl = 'https://imgur.com/a/kP3OPMG'
 
   const config = new DocumentBuilder()
     .setTitle('NestJs Bank Finance API')
@@ -23,8 +29,9 @@ export const setUpSwagger = (app: INestApplication, port = 3000) => {
   SwaggerModule.setup('docs', app, document, {
     jsonDocumentUrl: '/docs-json',
     yamlDocumentUrl: '/docs-yaml',
-    customJsStr: swaggerCustomJs(baseUrl, logoUrl),
     customCss: swaggerCustomCss,
+    customJsStr: swaggerCustomJs(baseUrl, logoUrl),
+    customfavIcon: logoUrl,
     customSiteTitle: 'NestJs Bank Backend',
     swaggerOptions: {
       displayOperationId: true,
