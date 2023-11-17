@@ -5,7 +5,7 @@ export default TypeOrmModule.forRootAsync({
   imports: [ConfigModule],
   inject: [CustomConfigService],
   useFactory: (configService: CustomConfigService) => ({
-    entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+    entities: [__dirname + '/../../**/*.entity.{js,ts}'],
     type: 'postgres',
     host: configService.getDbHost(),
     port: Number(configService.getDbPort()),
