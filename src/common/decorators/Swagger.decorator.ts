@@ -167,14 +167,17 @@ export function SwaggerDocumentationPaginationQuery(): MethodDecorator {
   return applyDecorators(
     ApiQuery({
       name: 'page',
+      type: 'number',
       required: false,
+      description: 'The page to recieve, starts at 1.',
       example: 1,
     }),
     ApiQuery({
       name: 'limit',
       required: false,
+      type: 'number',
       example: 10,
-      description: 'How many items to recieve',
+      description: 'How many items to recieve, max is 50',
     }),
   )
 }
