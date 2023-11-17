@@ -1,12 +1,16 @@
 import { INestApplication } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import helmet from 'helmet'
+import { swaggerCustomCss, swaggerCustomJs } from './swagger'
 
 export const setUpHelmet = (app: INestApplication) => {
   app.use(helmet())
 }
 
 export const setUpSwagger = (app: INestApplication, port = 3000) => {
+  const baseUrl = ''
+  const logoUrl = ''
+
   const config = new DocumentBuilder()
     .setTitle('NestJs Bank Finance API')
     .setDescription(
@@ -19,6 +23,8 @@ export const setUpSwagger = (app: INestApplication, port = 3000) => {
   SwaggerModule.setup('docs', app, document, {
     jsonDocumentUrl: '/docs-json',
     yamlDocumentUrl: '/docs-yaml',
+    customJsStr: swaggerCustomJs(baseUrl, logoUrl),
+    customCss: swaggerCustomCss,
     customSiteTitle: 'NestJs Bank Backend',
     swaggerOptions: {
       displayOperationId: true,
