@@ -9,6 +9,17 @@ import { MockUserRepository } from './users.repository.mock'
 describe('UsersService', () => {
   let service: UsersService
   let repository: Repository<User>
+  let getManyAndCount: jest.Mock = jest.fn().mockReturnValue([[], 0])
+  const createQueryBuilder = jest.fn(() => ({
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    addOrderBy: jest.fn().mockReturnThis(),
+    addGroupBy: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
+    getManyAndCount,
+  }))
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -31,8 +42,18 @@ describe('UsersService', () => {
   })
 
   it('should return items', async () => {
-    const itemToBeSaved = repository.create(await generateFakeUser())
+    const itemToBeSaved = repository.create(generateFakeUser())
     await repository.save(itemToBeSaved)
+    getManyAndCount = jest.fn().mockReturnValue([
+      [
+        {
+          ...itemToBeSaved,
+          accounts: [],
+        },
+      ],
+      1,
+    ])
+    repository.createQueryBuilder = createQueryBuilder as any
 
     const items = await service.findAll({
       limit: 10,
@@ -46,6 +67,7 @@ describe('UsersService', () => {
       items: [
         {
           ...itemToBeSaved,
+          accounts: [],
           created_at: expect.any(Date),
           updated_at: expect.any(Date),
           deleted_at: null,

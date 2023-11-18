@@ -23,13 +23,22 @@ export class UsersService {
 
   async findAll(pagination: Pagination): Promise<PaginatedDto<User>> {
     this.logger.debug('Finding all userss')
-    const [items, total] = await Promise.all([
-      this.usersRepository.find({
-        order: { created_at: 'DESC' },
-        skip: pagination.skip,
-        take: pagination.limit,
-      }),
-      this.usersRepository.count(),
+    const [[items, total]] = await Promise.all([
+      this.usersRepository
+        .createQueryBuilder('user')
+        .skip(pagination.skip)
+        .take(pagination.limit)
+        .leftJoin('user.accounts', 'account', 'account.deleted_at IS NULL')
+        .select([
+          'user.id',
+          'user.name',
+          'user.created_at',
+          'user.updated_at',
+          'user.deleted_at',
+          'account.id',
+        ])
+        .addOrderBy('user.created_at', 'DESC')
+        .getManyAndCount(),
     ])
 
     return {

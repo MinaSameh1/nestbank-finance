@@ -8,9 +8,11 @@ export class MockUserRepository {
     return this.users.slice(skip, skip + take)
   }
 
-  async findOne(
-    { where }: { where: Record<string, string> },
-  ): Promise<User | undefined> {
+  async findOne({
+    where,
+  }: {
+    where: Record<string, string>
+  }): Promise<User | undefined> {
     return this.users.find(user => {
       return Object.keys(where).every(key => {
         return user[key] === where[key]
@@ -120,6 +122,23 @@ export class MockUserRepository {
 
   clear(): void {
     this.users = []
+  }
+
+  createQueryBuilder(): any {
+    return this
+  }
+  skip(): any {
+    return this
+  }
+  take(): any {}
+  leftJoin() {
+    return this
+  }
+  select() {
+    return this
+  }
+  getMany() {
+    return []
   }
 
   private generateId(): string {
