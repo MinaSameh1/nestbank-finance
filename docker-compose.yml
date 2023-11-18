@@ -33,6 +33,19 @@ services:
       # or else it will fail to bind
       - ./pgadmin-data/:/var/lib/pgadmin/
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    environment:
+      - DB_HOST=database
+      - NODE_ENV=production
+      - PORT=8000
+    networks:
+      - postgres-network
+
 networks:
   postgres-network:
     driver: bridge
