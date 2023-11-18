@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { User } from '../../../entities/user.entity'
-import { MockUserRepository } from '../users.repository.mock'
 import { UsersService } from '../users.service'
 import { generateFakeUser } from './user.test.helper'
+import { MockUserRepository } from './users.repository.mock'
 
 describe('UsersService', () => {
   let service: UsersService

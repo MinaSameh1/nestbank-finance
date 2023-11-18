@@ -1,12 +1,12 @@
 import { NotFoundException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
-import { generateFakeUser } from 'src/common/helpers/tests'
 import { Repository } from 'typeorm'
 import { User } from '../../../entities/user.entity'
 import { UsersController } from '../users.controller'
-import { MockUserRepository } from '../users.repository.mock'
 import { UsersService } from '../users.service'
+import { generateFakeUser, generateFakeUsers } from './user.test.helper'
+import { MockUserRepository } from './users.repository.mock'
 
 describe('UsersController', () => {
   let controller: UsersController
@@ -47,22 +47,18 @@ describe('UsersController', () => {
       const itemToBeSaved = await generateFakeUser()
       const item = await repository.save(repository.create(itemToBeSaved))
       expect(item).toHaveProperty('id')
-      for (let i = 0; i < 10; i++) {
-        await repository.save(repository.create(await generateFakeUser()))
-      }
+      await repository.save(repository.create(await generateFakeUsers(14)))
 
       const items = await controller.findAll({
         page: 1,
-        limit: 1,
+        limit: 5,
         skip: 0,
       })
       expect(items.items).toBeInstanceOf(Array)
       expect(items.items.length).toBeGreaterThanOrEqual(1)
       expect(items.items[0]).toMatchObject(item)
-      expect(items.pages).toBeGreaterThanOrEqual(1)
-      expect(items.total).toBeGreaterThanOrEqual(1)
-      expect(items.total).toEqual(11)
-      expect(items.pages).toEqual(11)
+      expect(items.total).toEqual(15)
+      expect(items.pages).toEqual(3)
     })
 
     it('should return a user', async () => {

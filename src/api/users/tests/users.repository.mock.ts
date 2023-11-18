@@ -1,5 +1,6 @@
+import { User } from 'src/entities'
 import { generateUUID } from 'src/utils/uuid'
-import { User } from '../../entities/user.entity'
+
 export class MockUserRepository {
   private users: User[] = []
 
@@ -17,7 +18,14 @@ export class MockUserRepository {
     })
   }
 
-  create(createuserDto: any): User {
+  create(
+    createuserDto: any,
+  ): typeof createuserDto extends Array<infer item> ? item[] : User {
+    if (Array.isArray(createuserDto)) {
+      return createuserDto.map(user => {
+        return this.create(user)
+      })
+    }
     const user = User.fromPartial(createuserDto)
     return {
       ...user,
@@ -28,7 +36,24 @@ export class MockUserRepository {
     }
   }
 
-  async save(user: User): Promise<User> {
+  async save(
+    user: User | User[],
+  ): Promise<typeof user extends User[] ? User[] : User> {
+    if (Array.isArray(user)) {
+      return user.map(item => {
+        return this.save(item).then(newItem => newItem)
+      }) as any
+    }
+    if (user.id) {
+      const userIndex = this.users.findIndex(u => u.id === user.id)
+      if (userIndex > -1) {
+        this.users[userIndex] = {
+          ...this.users[userIndex],
+          ...user,
+        }
+        return Promise.resolve(this.users[userIndex])
+      }
+    }
     const index = this.users.push(user)
     return Promise.resolve(this.users[index - 1])
   }
