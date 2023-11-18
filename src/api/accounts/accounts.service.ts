@@ -68,27 +68,25 @@ export class AccountsService {
 
   async findAll(pagination: Pagination): Promise<PaginatedDto<Account>> {
     this.logger.debug('Finding all accountss')
-    const [[items, total]] = await Promise.all([
-      this.accountsRepository
-        .createQueryBuilder('account')
-        .skip(pagination.skip)
-        .take(pagination.limit)
-        .innerJoin('account.user', 'user')
-        .select([
-          'account.id',
-          'account.type',
-          'account.active',
-          'account.balance',
-          'account.account_number',
-          'account.updated_at',
-          'account.created_at',
-          'account.deleted_at',
-          'user.id',
-          'user.name',
-          'user.created_at',
-        ])
-        .getManyAndCount(),
-    ])
+    const [items, total] = await this.accountsRepository
+      .createQueryBuilder('account')
+      .skip(pagination.skip)
+      .take(pagination.limit)
+      .innerJoin('account.user', 'user')
+      .select([
+        'account.id',
+        'account.type',
+        'account.active',
+        'account.balance',
+        'account.account_number',
+        'account.updated_at',
+        'account.created_at',
+        'account.deleted_at',
+        'user.id',
+        'user.name',
+        'user.created_at',
+      ])
+      .getManyAndCount()
 
     return {
       total,
