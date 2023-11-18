@@ -154,6 +154,51 @@ describe('AccountsController', () => {
         expect(error.response.message.includes('Not Found')).toBeTruthy()
       }
     })
+
+    it('Should get accounts using user', async () => {
+      const user = await setUpUserForUserId(userRepository)
+      const itemToBeSaved = repository.create(
+        generateFakeAccount({
+          user: { id: user.id, name: user.name, created_at: user.created_at },
+        } as any),
+      )
+      await repository.save(itemToBeSaved)
+      const accounts = generateFakeAccounts(9, {
+        user: {
+          id: user.id,
+          name: user.name,
+          created_at: user.created_at,
+        },
+      })
+
+      getManyAndCount = jest.fn().mockReturnValue([
+        [
+          {
+            ...itemToBeSaved,
+          },
+          ...accounts,
+        ],
+        accounts.length + 1,
+      ])
+      const items = await controller.findUsingUser(user.id, {
+        limit: 10,
+        page: 1,
+        skip: 0,
+      })
+
+      expect(items.pages).toEqual(1)
+      expect(items.total).toEqual(accounts.length + 1)
+      expect(items.items).toBeInstanceOf(Array)
+      expect(items.items.length).toEqual(accounts.length + 1)
+      expect(items.items[0]).toMatchObject({
+        ...itemToBeSaved,
+        created_at: expect.any(Date),
+        updated_at: expect.any(Date),
+        deleted_at: null,
+      })
+      expect(items.items[0]).toHaveProperty('id')
+      expect(items.items[0]).toHaveProperty('user')
+    })
   })
 
   describe('Update', () => {

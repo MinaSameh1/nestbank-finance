@@ -114,6 +114,31 @@ If the user already has an account of the same type, it will throw an error.
   }
 
   @SwaggerDocumentation({
+    summary: 'Find accounts using User',
+    description: `
+Finds a user's accounts using the user's id.
+
+## Error Codes:
+- \`${ErrorCodes.USER_DOES_NOT_EXIST}\` - User does not exist  
+`,
+    okDescription: 'Return one account',
+    badRequestDescription: 'Invalid user id',
+    paginated: true,
+    okType: Account,
+  })
+  @ApiParam({
+    name: 'userId',
+    type: String,
+    description: 'User id to find accounts for',
+    required: true,
+  })
+  @SwaggerDocumentationPaginationQuery()
+  @Get('/user/:userId')
+  findUsingUser(@IdParam('userId') id: ID, @Paginate() pagination: Pagination) {
+    return this.accountsService.findManyByUser(id, pagination)
+  }
+
+  @SwaggerDocumentation({
     summary: 'Update one account',
     okDescription: 'Return success message with',
     badRequestDescription: 'Invalid account id',

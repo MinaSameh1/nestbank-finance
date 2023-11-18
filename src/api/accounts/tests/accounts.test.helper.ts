@@ -14,8 +14,11 @@ export const generateFakeAccount = (
   }
 }
 
-export const generateFakeAccounts = (count: number): CreateAccountDto[] => {
-  return faker.helpers.multiple(generateFakeAccount, { count })
+export const generateFakeAccounts = (
+  count: number,
+  overrides?: any,
+): CreateAccountDto[] => {
+  return faker.helpers.multiple(() => generateFakeAccount(overrides), { count })
 }
 
 export const setUpUserForUserId = async (userRepo: any) => {

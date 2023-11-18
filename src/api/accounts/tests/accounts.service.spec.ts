@@ -10,7 +10,11 @@ import { Repository } from 'typeorm'
 import { Account } from '../../../entities/account.entity'
 import { AccountsService } from '../accounts.service'
 import { MockAccountRepository } from './accounts.repository.mock'
-import { generateFakeAccount, setUpUserForUserId } from './accounts.test.helper'
+import {
+  generateFakeAccount,
+  generateFakeAccounts,
+  setUpUserForUserId,
+} from './accounts.test.helper'
 
 describe('AccountsService', () => {
   let service: AccountsService
@@ -137,6 +141,51 @@ describe('AccountsService', () => {
 
       const oldItem = await service.findOne(item.id)
       expect(oldItem).toMatchObject(item)
+    })
+
+    it('should return accounts using userId', async () => {
+      const user = await setUpUserForUserId(userRepository)
+      const itemToBeSaved = repository.create(
+        generateFakeAccount({
+          user: { id: user.id, name: user.name, created_at: user.created_at },
+        } as any),
+      )
+      await repository.save(itemToBeSaved)
+      const accounts = generateFakeAccounts(9, {
+        user: {
+          id: user.id,
+          name: user.name,
+          created_at: user.created_at,
+        },
+      })
+
+      getManyAndCount = jest.fn().mockReturnValue([
+        [
+          {
+            ...itemToBeSaved,
+          },
+          ...accounts,
+        ],
+        accounts.length + 1,
+      ])
+      const items = await service.findManyByUser(user.id, {
+        limit: 10,
+        page: 1,
+        skip: 0,
+      })
+
+      expect(items.pages).toEqual(1)
+      expect(items.total).toEqual(accounts.length + 1)
+      expect(items.items).toBeInstanceOf(Array)
+      expect(items.items.length).toEqual(accounts.length + 1)
+      expect(items.items[0]).toMatchObject({
+        ...itemToBeSaved,
+        created_at: expect.any(Date),
+        updated_at: expect.any(Date),
+        deleted_at: null,
+      })
+      expect(items.items[0]).toHaveProperty('id')
+      expect(items.items[0]).toHaveProperty('user')
     })
   })
 

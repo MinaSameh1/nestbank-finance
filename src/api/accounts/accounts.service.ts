@@ -179,4 +179,34 @@ export class AccountsService {
       },
     )
   }
+
+  async findManyByUser(userId: ID, pagination: Pagination) {
+    this.logger.debug(`Finding accounts for user with id: ${userId}`)
+    const [accounts, total] = await this.accountsRepository
+      .createQueryBuilder('account')
+      .skip(pagination.skip)
+      .take(pagination.limit)
+      .innerJoin('account.user', 'user')
+      .select([
+        'account.id',
+        'account.type',
+        'account.active',
+        'account.balance',
+        'account.account_number',
+        'account.updated_at',
+        'account.created_at',
+        'account.deleted_at',
+        'user.id',
+        'user.name',
+        'user.created_at',
+      ])
+      .where('user.id = :userId', { userId })
+      .getManyAndCount()
+
+    return {
+      total: total,
+      pages: Math.ceil(total / 10),
+      items: accounts,
+    }
+  }
 }
