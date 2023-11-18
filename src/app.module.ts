@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { AccountsModule } from './api/accounts/accounts.module'
 import { ServerController } from './api/server.controller'
+import { TransactionsModule } from './api/transactions/transactions.module'
 import { UsersModule } from './api/users/users.module'
 import { ConfigModule } from './common/configuration'
 import { DatabaseModule } from './common/db/db.module'
@@ -11,6 +12,7 @@ import { DatabaseModule } from './common/db/db.module'
     DatabaseModule,
     UsersModule.forRoot({ controller: true }),
     AccountsModule.forRoot({ controller: true }),
+    TransactionsModule.forRoot({ controller: true }),
   ],
   controllers: [ServerController],
 })
