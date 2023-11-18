@@ -25,7 +25,7 @@ export class Account extends AbstractEntity {
     default: () => Math.floor(Math.random() * 10000000000000000).toString(),
     nullable: false,
   })
-  accountNumber: string
+  account_number: string
 
   @Column()
   balance: number
