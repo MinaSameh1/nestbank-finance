@@ -10,6 +10,7 @@ export const generateFakeAccount = (
     balance: faker.number.int({ min: 0, max: 100000 }),
     type: faker.helpers.enumValue(AccountType),
     userId: faker.string.uuid(),
+    active: faker.datatype.boolean(),
     ...overrides,
   }
 }

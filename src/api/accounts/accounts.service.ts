@@ -32,6 +32,7 @@ export class AccountsService {
 
     const account = this.accountsRepository.create({
       ...createAccountDto,
+      account_number: Math.floor(Math.random() * 10000000000000000).toString(),
       user: {
         id: userId,
       },

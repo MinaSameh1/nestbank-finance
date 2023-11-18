@@ -242,7 +242,7 @@ describe('AccountsService', () => {
       const itemToBeUpdated = generateFakeAccount({
         userId: undefined,
       })
-      const newItem = await service.update(item.id, itemToBeUpdated)
+      const newItem = await service.update(item.id, itemToBeUpdated as any)
       expect(newItem.message.includes('Successfully Updated')).toBeTruthy()
     })
 
@@ -267,7 +267,7 @@ describe('AccountsService', () => {
         userId: undefined,
       })
       try {
-        await service.update(item.id, itemToBeUpdated)
+        await service.update(item.id, itemToBeUpdated as any)
       } catch (err) {
         expect(err.message.includes('Successfully Updated')).toBeFalsy()
         expect(err).toBeInstanceOf(NotFoundException)

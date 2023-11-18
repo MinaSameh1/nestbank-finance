@@ -209,7 +209,7 @@ describe('AccountsController', () => {
       expect(newAccount).toHaveProperty('id')
 
       const account = await controller.update(newAccount.id, {
-        balance: 100,
+        active: !newAccount.active,
       })
 
       expect(account).toHaveProperty('message')
@@ -218,7 +218,9 @@ describe('AccountsController', () => {
 
     it('Should throw error when account not found', async () => {
       try {
-        await controller.update('123', {})
+        await controller.update('123', {
+          active: true,
+        })
       } catch (error) {
         expect(error).toBeInstanceOf(NotFoundException)
         expect(error.response).toHaveProperty('statusCode')

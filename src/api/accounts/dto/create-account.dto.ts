@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsEnum, IsNumber, IsUUID, Max, Min } from 'class-validator'
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator'
 import { AccountType, AccountTypeValue, AccountTypeValues } from 'src/entities'
 
 export class CreateAccountDto {
@@ -16,4 +24,9 @@ export class CreateAccountDto {
   @IsUUID()
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   userId: string
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({ example: true })
+  active?: boolean = false
 }
