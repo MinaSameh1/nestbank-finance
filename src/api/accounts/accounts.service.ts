@@ -125,7 +125,8 @@ export class AccountsService {
 
   async update(id: ID, updateAccountDto: UpdateAccountDto) {
     this.logger.debug(`Updating account with id: ${id}`)
-    if (updateAccountDto.userId) {
+    if ((updateAccountDto as any).userId) {
+      // Force Check, just in case!
       throw new BadRequestException(ErrorMessages.CANNOT_UPDATE_USER_ID, {
         description: ErrorCodes.CANNOT_UPDATE_USER_ID,
       })
