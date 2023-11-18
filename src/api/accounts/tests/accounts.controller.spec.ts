@@ -29,6 +29,22 @@ describe('AccountsController', () => {
     }),
   }
 
+  let getManyAndCount: jest.Mock = jest.fn().mockReturnValue([[], 0])
+  const getOne: jest.Mock = jest.fn().mockReturnValue(undefined)
+  const createQueryBuilder = jest.fn(() => ({
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    addOrderBy: jest.fn().mockReturnThis(),
+    addGroupBy: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
+    innerJoin: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    getManyAndCount,
+    getOne,
+  }))
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AccountsController],
@@ -52,6 +68,7 @@ describe('AccountsController', () => {
     controller = module.get<AccountsController>(AccountsController)
     repository = module.get<Repository<Account>>(getRepositoryToken(Account))
     userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    repository.createQueryBuilder = createQueryBuilder as any
   })
 
   it('should be defined', () => {
@@ -76,7 +93,23 @@ describe('AccountsController', () => {
       const itemToBeSaved = generateFakeAccount()
       const item = await repository.save(repository.create(itemToBeSaved))
       expect(item).toHaveProperty('id')
-      await repository.save(repository.create(generateFakeAccounts(14)))
+      const accounts = generateFakeAccounts(14)
+      await repository.save(repository.create(accounts))
+
+      const returnValue = accounts.splice(0, 4).map(account => ({
+        ...account,
+        user: [] as any,
+      }))
+
+      returnValue.unshift({
+        ...item,
+        user: {
+          id: '010e97d7-23cf-40f9-afb4-99cc565c74f1',
+          created_at: '2023-11-17T12:29:31.476Z',
+          name: 'string',
+        } as any,
+      } as any)
+      getManyAndCount = jest.fn().mockReturnValue([returnValue, 15])
 
       const items = await controller.findAll({
         page: 1,
@@ -95,8 +128,19 @@ describe('AccountsController', () => {
         repository.create(generateFakeAccount()),
       )
       expect(newAccount).toHaveProperty('id')
+
+      getOne.mockReturnValue({
+        ...newAccount,
+        user: {
+          id: '010e97d7-23cf-40f9-afb4-99cc565c74f1',
+          created_at: '2023-11-17T12:29:31.476Z',
+          name: 'string',
+        },
+      })
       const account = await controller.findOne(newAccount.id)
       expect(account).toMatchObject(newAccount)
+      expect(account).toHaveProperty('user')
+      expect(account.user).toHaveProperty('id')
     })
 
     it('Should throw error when account not found', async () => {

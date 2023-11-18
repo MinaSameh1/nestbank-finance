@@ -27,6 +27,22 @@ describe('AccountsService', () => {
     }),
   }
 
+  let getManyAndCount: jest.Mock = jest.fn().mockReturnValue([[], 0])
+  let getOne: jest.Mock = jest.fn().mockReturnValue(undefined)
+  const createQueryBuilder = jest.fn(() => ({
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    addOrderBy: jest.fn().mockReturnThis(),
+    addGroupBy: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
+    innerJoin: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    getManyAndCount,
+    getOne,
+  }))
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -52,6 +68,7 @@ describe('AccountsService', () => {
     await repository.clear()
     await userRepository.clear()
     databaseService.doInTransaction.mockClear()
+    repository.createQueryBuilder = createQueryBuilder as any
   })
 
   it('should be defined', () => {
@@ -63,6 +80,15 @@ describe('AccountsService', () => {
       const itemToBeSaved = repository.create(generateFakeAccount())
       await repository.save(itemToBeSaved)
 
+      getManyAndCount = jest.fn().mockReturnValue([
+        [
+          {
+            ...itemToBeSaved,
+            user: {},
+          },
+        ],
+        1,
+      ])
       const items = await service.findAll({
         limit: 10,
         page: 1,
@@ -81,6 +107,8 @@ describe('AccountsService', () => {
           },
         ],
       })
+      expect(items.items[0]).toHaveProperty('id')
+      expect(items.items[0]).toHaveProperty('user')
     })
 
     it('Should get account', async () => {
@@ -89,6 +117,15 @@ describe('AccountsService', () => {
 
       const itemToBeSaved = generateFakeAccount()
       const item = await service.create(itemToBeSaved, user.id)
+
+      getOne = jest.fn().mockReturnValue({
+        ...item,
+        user: {
+          id: user.id,
+          name: user.name,
+          created_at: user.created_at,
+        },
+      })
 
       expect(item).toMatchObject({
         ...itemToBeSaved,
@@ -243,6 +280,16 @@ describe('AccountsService', () => {
     })
     expect(item).toHaveProperty('id')
 
+    repository.createQueryBuilder = createQueryBuilder as any
+    getOne = jest.fn().mockReturnValue({
+      ...item,
+      deleted_at: new Date(),
+      user: {
+        id: user.id,
+        name: user.name,
+        created_at: user.created_at,
+      },
+    })
     const oldItem = await service.remove(item.id)
     expect(oldItem.message.includes('Successfully Deleted')).toBeTruthy()
     const deletedItem = await service.findOne(item.id)
