@@ -6,10 +6,27 @@ Has swagger built in for documentation.
 
 ## Installation
 
+Install deps
 ```bash
 $ yarn
 ```
 
+Copy .env 
+```bash
+$ cp .env.example .env
+```
+
+Run database
+```
+docker compose up -d database
+```
+
+Run app
+```
+yarn start
+```
+
+Then go to http://localhost:8000/docs for swagger
 ## Running the app
 
 ```bash
