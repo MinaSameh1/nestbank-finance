@@ -58,27 +58,48 @@ describe('AccountsService', () => {
     expect(service).toBeDefined()
   })
 
-  it('should return accounts', async () => {
-    const itemToBeSaved = repository.create(generateFakeAccount())
-    await repository.save(itemToBeSaved)
+  describe('Find', () => {
+    it('should return accounts', async () => {
+      const itemToBeSaved = repository.create(generateFakeAccount())
+      await repository.save(itemToBeSaved)
 
-    const items = await service.findAll({
-      limit: 10,
-      page: 1,
-      skip: 0,
+      const items = await service.findAll({
+        limit: 10,
+        page: 1,
+        skip: 0,
+      })
+
+      expect(items).toMatchObject({
+        pages: 1,
+        total: 1,
+        items: [
+          {
+            ...itemToBeSaved,
+            created_at: expect.any(Date),
+            updated_at: expect.any(Date),
+            deleted_at: null,
+          },
+        ],
+      })
     })
 
-    expect(items).toMatchObject({
-      pages: 1,
-      total: 1,
-      items: [
-        {
-          ...itemToBeSaved,
-          created_at: expect.any(Date),
-          updated_at: expect.any(Date),
-          deleted_at: null,
-        },
-      ],
+    it('Should get account', async () => {
+      const user = await setUpUserForUserId(userRepository)
+      expect(user).toHaveProperty('id') // sanity check
+
+      const itemToBeSaved = generateFakeAccount()
+      const item = await service.create(itemToBeSaved, user.id)
+
+      expect(item).toMatchObject({
+        ...itemToBeSaved,
+        created_at: expect.any(Date),
+        updated_at: expect.any(Date),
+        deleted_at: null,
+      })
+      expect(item).toHaveProperty('id')
+
+      const oldItem = await service.findOne(item.id)
+      expect(oldItem).toMatchObject(item)
     })
   })
 
@@ -206,25 +227,6 @@ describe('AccountsService', () => {
         { active: !item.active },
       )
     })
-  })
-
-  it('Should get account', async () => {
-    const user = await setUpUserForUserId(userRepository)
-    expect(user).toHaveProperty('id') // sanity check
-
-    const itemToBeSaved = generateFakeAccount()
-    const item = await service.create(itemToBeSaved, user.id)
-
-    expect(item).toMatchObject({
-      ...itemToBeSaved,
-      created_at: expect.any(Date),
-      updated_at: expect.any(Date),
-      deleted_at: null,
-    })
-    expect(item).toHaveProperty('id')
-
-    const oldItem = await service.findOne(item.id)
-    expect(oldItem).toMatchObject(item)
   })
 
   it('Should delete account', async () => {
