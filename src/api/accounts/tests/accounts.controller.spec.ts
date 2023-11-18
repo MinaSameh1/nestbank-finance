@@ -11,11 +11,23 @@ import { MockAccountRepository } from './accounts.repository.mock'
 import {
   generateFakeAccount,
   generateFakeAccounts,
+  setUpUserForUserId,
 } from './accounts.test.helper'
 
 describe('AccountsController', () => {
   let controller: AccountsController
   let repository: Repository<Account>
+  let userRepository: Repository<User>
+  const databaseService = {
+    findOne: jest.fn((_entity, id) => repository.findOne(id)),
+    update: jest.fn((_entity, id, data) => repository.update(id, data)),
+    doInTransaction: jest.fn(cb => {
+      return cb({
+        update: databaseService.update,
+        findOne: databaseService.findOne,
+      })
+    }),
+  }
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -24,9 +36,7 @@ describe('AccountsController', () => {
         AccountsService,
         {
           provide: DatabaseService,
-          useValue: jest.fn(() => ({
-            doInTransaction: jest.fn(),
-          })),
+          useValue: databaseService,
         },
         {
           provide: getRepositoryToken(User),
@@ -41,6 +51,7 @@ describe('AccountsController', () => {
 
     controller = module.get<AccountsController>(AccountsController)
     repository = module.get<Repository<Account>>(getRepositoryToken(Account))
+    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
   })
 
   it('should be defined', () => {
@@ -49,7 +60,12 @@ describe('AccountsController', () => {
 
   describe('Create', () => {
     it('should create a account', async () => {
-      const account = await controller.create(generateFakeAccount())
+      const user = await setUpUserForUserId(userRepository)
+      expect(user).toHaveProperty('id') // sanity check
+      const itemToBeSaved = generateFakeAccount({
+        userId: user.id,
+      })
+      const account = await controller.create(itemToBeSaved)
       expect(account).toHaveProperty('id')
       expect(account).toHaveProperty('created_at')
     })
@@ -121,6 +137,43 @@ describe('AccountsController', () => {
         expect(error.response).toHaveProperty('message')
         expect(error.response.message.includes('Not Found')).toBeTruthy()
       }
+    })
+
+    it('Should update status', async () => {
+      const user = await setUpUserForUserId(userRepository)
+      expect(user).toHaveProperty('id') // sanity check
+
+      const itemToBeSaved = generateFakeAccount({
+        userId: user.id,
+      })
+      const item = await repository.save(repository.create(itemToBeSaved))
+      expect(item).toMatchObject({
+        ...itemToBeSaved,
+        created_at: expect.any(Date),
+        updated_at: expect.any(Date),
+        deleted_at: null,
+      })
+      expect(item).toHaveProperty('id')
+
+      const oldItem = await controller.updateStatus(item.id)
+      expect(oldItem).toMatchObject({
+        ...itemToBeSaved,
+        active: !item.active,
+        created_at: expect.any(Date),
+        updated_at: expect.any(Date),
+        deleted_at: null,
+      })
+
+      expect(databaseService.doInTransaction).toHaveBeenCalledTimes(1)
+      expect(databaseService.update).toHaveBeenCalledTimes(1)
+      expect(databaseService.findOne).toHaveBeenCalledWith(Account, {
+        where: { id: item.id },
+      })
+      expect(databaseService.update).toHaveBeenCalledWith(
+        Account,
+        { id: item.id },
+        { active: !item.active },
+      )
     })
   })
 

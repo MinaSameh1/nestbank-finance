@@ -4,7 +4,7 @@ import { Account, AccountType } from 'src/entities'
 import { CreateAccountDto } from '../dto/create-account.dto'
 
 export const generateFakeAccount = (
-  overrides?: Partial<Account>,
+  overrides?: Partial<CreateAccountDto | Account>,
 ): CreateAccountDto => {
   return {
     balance: faker.number.int({ min: 0, max: 100000 }),
