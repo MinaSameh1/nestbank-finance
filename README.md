@@ -4,6 +4,8 @@ Backend built using [Nest](https://github.com/nestjs/nest), Typescript and SQL.
 
 Has swagger built in for documentation.
 
+Hosted on render, for docs: https://nestbank-finance.onrender.com/docs
+
 ## Installation
 
 Install deps
