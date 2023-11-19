@@ -23,6 +23,7 @@ export const setUpSwagger = (app: INestApplication, port = 3000) => {
       'This is the API documentation for the NestJs Bank Finance API',
     )
     .setVersion('1.0')
+    .addServer('https://nestbank-finance.onrender.com', 'Render Hosted')
     .addServer(`http://localhost:${port}`, 'Local Env') // append at the end
     .build()
   const document = SwaggerModule.createDocument(app, config)
