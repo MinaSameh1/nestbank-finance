@@ -10,15 +10,15 @@ import { ErrorCodes, ErrorMessages } from 'src/assets/strings'
 import { DatabaseService, ID } from 'src/common/db'
 import { PaginatedDto, Pagination } from 'src/common/types'
 import { Account } from 'src/entities'
-import { Repository } from 'typeorm'
 import { Transaction, TransactionType } from '../../entities/transaction.entity'
+import { TransactionRepository } from './transactions.repository'
 
 @Injectable()
 export class TransactionsService {
   private readonly logger = new Logger(TransactionsService.name)
 
   @InjectRepository(Transaction)
-  private readonly transactionsRepository: Repository<Transaction>
+  private readonly transactionsRepository: TransactionRepository
 
   @Inject(DatabaseService)
   private readonly databaseService: DatabaseService
@@ -305,35 +305,12 @@ export class TransactionsService {
 
   async refund(transactionId: ID) {
     const dbTransaction = await this.databaseService.getQueryRunner()
-    const transactionEntity = await dbTransaction.manager
-      .createQueryBuilder(Transaction, 'transaction')
-      .leftJoin('transaction.account', 'account')
-      .leftJoin('transaction.to_account', 'to_account')
-      .leftJoin('account.user', 'user')
-      .leftJoin('to_account.user', 'to_user')
-      .select([
-        'transaction.id',
-        'transaction.type',
-        'transaction.amount',
-        'transaction.refunded',
-        'transaction.refundable',
-        'transaction.created_at',
-        'transaction.updated_at',
-        'account.id',
-        'account.balance',
-        'account.active',
-        'user.id',
-        'user.name',
-        'user.created_at',
-        'to_account.id',
-        'to_account.balance',
-        'to_account.active',
-        'to_user.id',
-        'to_user.name',
-        'to_user.created_at',
-      ])
-      .where('transaction.id = :transaction', { transaction: transactionId })
-      .getOne()
+
+    const transactionEntity =
+      await this.transactionsRepository.findPopulatedByTransactionId(
+        transactionId,
+        dbTransaction.manager,
+      )
 
     if (!transactionEntity) {
       throw new NotFoundException(

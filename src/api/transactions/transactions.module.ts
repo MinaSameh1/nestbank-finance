@@ -3,11 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { DatabaseModule } from 'src/common/db'
 import { Transaction } from '../../entities/transaction.entity'
 import { TransactionsController } from './transactions.controller'
+import { TransactionRepository } from './transactions.repository'
 import { TransactionsService } from './transactions.service'
 
 @Module({
   imports: [DatabaseModule, TypeOrmModule.forFeature([Transaction])],
-  providers: [TransactionsService],
+  providers: [TransactionsService, TransactionRepository],
 })
 export class TransactionsModule {
   static forRoot(options?: {
@@ -26,8 +27,8 @@ export class TransactionsModule {
     if (options?.repoOnly) {
       return {
         module: TransactionsModule,
-        providers: [],
-        exports: [TypeOrmModule],
+        providers: [TransactionRepository],
+        exports: [TransactionRepository],
       }
     }
     // By default get service only

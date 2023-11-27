@@ -4,6 +4,7 @@ import {
   Column,
   DeepPartial,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToOne,
@@ -23,6 +24,7 @@ export type TransactionTypeValue = (typeof TransactionTypeValues)[number]
 @Entity()
 export class Transaction extends AbstractEntity {
   @Column({ enum: TransactionTypeValues })
+  @Index('index_transaction_type')
   @ApiProperty({ enum: TransactionTypeValues })
   type: TransactionTypeValue
 
@@ -31,6 +33,7 @@ export class Transaction extends AbstractEntity {
   amount: number
 
   @Column({ default: false })
+  @Index('index_transaction_refunded')
   @ApiProperty({ default: false })
   refunded: boolean
 
