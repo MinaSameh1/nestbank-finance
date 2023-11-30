@@ -39,6 +39,17 @@ export class TransactionsController {
   findAll(
     @Paginate() pagination: Pagination,
   ): Promise<PaginatedDto<Transaction>> {
+    // DTOs Pipes
+    // Path, documentation
+    // Recieves Request Data (Clean)
+    // Choose path -> what happens
+    // Select -> What data to return
+    // Modify Shape -> DTO
+    // Pass data to the service
+
+    // If condition, wrong
+
+    // Builder Pattern, builds
     return this.transactionsService.findAll(pagination)
   }
 

@@ -37,4 +37,17 @@ export class DatabaseService {
   ) {
     return this.dataSource.transaction(callback)
   }
+
+  public async clearAll() {
+    // just to be safe
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Not implemented')
+    }
+    this.logger.warn('Clearing all data in database')
+
+    const connection = this.dataSource.manager.connection
+
+    await connection.dropDatabase()
+    await connection.synchronize()
+  }
 }

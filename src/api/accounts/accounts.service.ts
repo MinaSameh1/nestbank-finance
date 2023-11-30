@@ -1,16 +1,15 @@
 import {
   BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
 import { ErrorCodes, ErrorMessages, SuccessMessages } from 'src/assets/strings'
 import { DatabaseService, ID } from 'src/common/db'
 import { PaginatedDto, Pagination } from 'src/common/types'
 import { Account, User } from 'src/entities'
-import { Repository } from 'typeorm'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
 
@@ -18,28 +17,21 @@ import { UpdateAccountDto } from './dto/update-account.dto'
 export class AccountsService {
   private readonly logger = new Logger(AccountsService.name)
 
-  @InjectRepository(Account)
-  private readonly accountsRepository: Repository<Account>
-
   @Inject(DatabaseService)
   private readonly databaseService: DatabaseService
-
-  @InjectRepository(User)
-  private readonly usersRepository: Repository<User>
 
   async create(createAccountDto: CreateAccountDto, userId: ID) {
     this.logger.debug('Creating a new account')
 
-    const account = this.accountsRepository.create({
+    const account = Account.create({
       ...createAccountDto,
-      account_number: Math.floor(Math.random() * 10000000000000000).toString(),
       user: {
         id: userId,
       },
     })
 
     // Check first that user exists
-    const user = await this.usersRepository.findOne({ where: { id: userId } })
+    const user = await User.findOne({ where: { id: userId } })
     if (!user) {
       throw new NotFoundException(ErrorMessages.USER_DOES_NOT_EXIST, {
         description: ErrorCodes.USER_DOES_NOT_EXIST,
@@ -47,7 +39,7 @@ export class AccountsService {
     }
 
     // Check if user has an account already
-    const accountExists = await this.accountsRepository.findOne({
+    const accountExists = await Account.findOne({
       where: {
         type: account.type,
         user: {
@@ -62,7 +54,7 @@ export class AccountsService {
       })
     }
 
-    await this.accountsRepository.insert(account)
+    await Account.insert(account)
 
     return account
   }
@@ -101,10 +93,17 @@ export class AccountsService {
         description: ErrorCodes.CANNOT_UPDATE_USER_ID,
       })
     }
-    const updateResult = await this.accountsRepository.update(
-      { id },
-      updateAccountDto,
-    )
+
+    // check that account exists
+    const account = await Account.findOne({ where: { id } })
+    if (!account) {
+      throw new NotFoundException(ErrorMessages.NOT_FOUND_ID('account', id), {
+        description: ErrorCodes.NOT_FOUND,
+      })
+    }
+
+    const updateResult = await Account.update({ id }, updateAccountDto)
+
     if (!(updateResult.affected === 1)) {
       throw new NotFoundException(ErrorMessages.NOT_FOUND_ID('account', id), {
         description: ErrorCodes.NOT_FOUND,
@@ -117,9 +116,21 @@ export class AccountsService {
 
   async remove(id: ID) {
     this.logger.debug(`Removing account with id: ${id}`)
-    const deleteResult = await this.accountsRepository.softDelete({ id })
-    if (!(deleteResult.affected === 1)) {
+    // check that account exists
+    const account = await Account.findOneBy({ id })
+    if (!account) {
       throw new NotFoundException(ErrorMessages.NOT_FOUND_ID('account', id), {
+        description: ErrorCodes.NOT_FOUND,
+      })
+    }
+
+    // This doesn't check if account exists
+    const updateResult = await Account.update(
+      { id },
+      { deleted_at: new Date() },
+    )
+    if (!(updateResult.affected === 1)) {
+      throw new ConflictException(ErrorMessages.NOT_FOUND_ID('account', id), {
         description: ErrorCodes.NOT_FOUND,
       })
     }
@@ -143,10 +154,8 @@ export class AccountsService {
           )
         }
         await manager.update(Account, { id }, { active: !account.active })
-        return {
-          ...account,
-          active: !account.active,
-        } as Account
+        account.active = !account.active
+        return account
       },
     )
   }

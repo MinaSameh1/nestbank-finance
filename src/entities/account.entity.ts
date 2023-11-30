@@ -22,7 +22,7 @@ export type AccountTypeValue = (typeof AccountTypeValues)[number]
 export class Account extends AbstractEntity {
   @Column({
     unique: true,
-    default: () => Math.floor(Math.random() * 10000000000000000).toString(),
+    default: () => Math.floor(Math.random() * 1000000000000).toString(),
     nullable: false,
   })
   account_number: string
@@ -74,6 +74,7 @@ export class Account extends AbstractEntity {
       ])
       .skip(skip)
       .take(limit)
+      .orderBy('account.created_at', 'DESC')
       .getManyAndCount()
   }
 
@@ -124,6 +125,7 @@ export class Account extends AbstractEntity {
       ])
       .skip(skip)
       .take(limit)
+      .orderBy('account.created_at', 'DESC')
       .where('user.id = :userId', { userId })
       .getManyAndCount()
   }

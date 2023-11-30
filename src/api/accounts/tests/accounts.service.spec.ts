@@ -1,15 +1,13 @@
 import { NotFoundException } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import { getRepositoryToken } from '@nestjs/typeorm'
+import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm'
 import { randomUUID } from 'crypto'
-import { MockUserRepository } from 'src/api/users/tests/users.repository.mock'
 import { ErrorCodes, ErrorMessages } from 'src/assets/strings'
-import { DatabaseService } from 'src/common/db'
+import { DatabaseService, TestDatabaseModule } from 'src/common/db'
 import { User } from 'src/entities'
 import { Repository } from 'typeorm'
 import { Account } from '../../../entities/account.entity'
 import { AccountsService } from '../accounts.service'
-import { MockAccountRepository } from './accounts.repository.mock'
 import {
   generateFakeAccount,
   generateFakeAccounts,
@@ -20,59 +18,24 @@ describe('AccountsService', () => {
   let service: AccountsService
   let repository: Repository<Account>
   let userRepository: Repository<User>
-  const databaseService = {
-    findOne: jest.fn((_entity, id) => repository.findOne(id)),
-    update: jest.fn((_entity, id, data) => repository.update(id, data)),
-    doInTransaction: jest.fn(cb => {
-      return cb({
-        update: databaseService.update,
-        findOne: databaseService.findOne,
-      })
-    }),
-  }
-
-  let getManyAndCount: jest.Mock = jest.fn().mockReturnValue([[], 0])
-  let getOne: jest.Mock = jest.fn().mockReturnValue(undefined)
-  const createQueryBuilder = jest.fn(() => ({
-    skip: jest.fn().mockReturnThis(),
-    take: jest.fn().mockReturnThis(),
-    leftJoin: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    addOrderBy: jest.fn().mockReturnThis(),
-    addGroupBy: jest.fn().mockReturnThis(),
-    addSelect: jest.fn().mockReturnThis(),
-    innerJoin: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    getManyAndCount,
-    getOne,
-  }))
+  let databaseService: DatabaseService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AccountsService,
-        {
-          provide: DatabaseService,
-          useValue: databaseService,
-        },
-        {
-          provide: getRepositoryToken(Account),
-          useClass: MockAccountRepository,
-        },
-        {
-          provide: getRepositoryToken(User),
-          useClass: MockUserRepository,
-        },
+      imports: [
+        TestDatabaseModule.forRoot(),
+        TypeOrmModule.forFeature([Account, User]),
       ],
+      providers: [AccountsService],
     }).compile()
 
     service = module.get<AccountsService>(AccountsService)
     repository = module.get<Repository<Account>>(getRepositoryToken(Account))
     userRepository = module.get<Repository<User>>(getRepositoryToken(User))
-    await repository.clear()
-    await userRepository.clear()
-    databaseService.doInTransaction.mockClear()
-    repository.createQueryBuilder = createQueryBuilder as any
+    databaseService = module.get<DatabaseService>(DatabaseService)
+    // Reset database
+    process.env.NODE_ENV = 'test'
+    await databaseService.clearAll()
   })
 
   it('should be defined', () => {
@@ -81,18 +44,18 @@ describe('AccountsService', () => {
 
   describe('Find', () => {
     it('should return accounts', async () => {
-      const itemToBeSaved = repository.create(generateFakeAccount())
-      await repository.save(itemToBeSaved)
+      const user = await setUpUserForUserId(userRepository)
 
-      getManyAndCount = jest.fn().mockReturnValue([
-        [
-          {
-            ...itemToBeSaved,
-            user: {},
-          },
-        ],
-        1,
-      ])
+      const itemToBeSaved = generateFakeAccount(
+        {
+          userId: user.id,
+        },
+        true,
+      )
+
+      await repository.save(repository.create(itemToBeSaved))
+      delete itemToBeSaved.userId
+
       const items = await service.findAll({
         limit: 10,
         page: 1,
@@ -120,16 +83,9 @@ describe('AccountsService', () => {
       expect(user).toHaveProperty('id') // sanity check
 
       const itemToBeSaved = generateFakeAccount()
-      const item = await service.create(itemToBeSaved, user.id)
 
-      getOne = jest.fn().mockReturnValue({
-        ...item,
-        user: {
-          id: user.id,
-          name: user.name,
-          created_at: user.created_at,
-        },
-      })
+      const item = await service.create(itemToBeSaved as any, user.id)
+      delete itemToBeSaved.userId
 
       expect(item).toMatchObject({
         ...itemToBeSaved,
@@ -145,29 +101,33 @@ describe('AccountsService', () => {
 
     it('should return accounts using userId', async () => {
       const user = await setUpUserForUserId(userRepository)
-      const itemToBeSaved = repository.create(
-        generateFakeAccount({
-          user: { id: user.id, name: user.name, created_at: user.created_at },
-        } as any),
+      const itemToBeSaved = generateFakeAccount(
+        {
+          userId: user.id,
+        } as any,
+        true,
       )
-      await repository.save(itemToBeSaved)
-      const accounts = generateFakeAccounts(9, {
-        user: {
-          id: user.id,
-          name: user.name,
-          created_at: user.created_at,
+
+      const accounts = generateFakeAccounts(
+        9,
+        {
+          user: {
+            id: user.id,
+            name: user.name,
+            created_at: user.created_at,
+          },
         },
+        true,
+      )
+
+      accounts.push({
+        ...itemToBeSaved,
+        userId: user.id,
       })
 
-      getManyAndCount = jest.fn().mockReturnValue([
-        [
-          {
-            ...itemToBeSaved,
-          },
-          ...accounts,
-        ],
-        accounts.length + 1,
-      ])
+      await repository.save(repository.create(accounts))
+
+      delete itemToBeSaved.userId
       const items = await service.findManyByUser(user.id, {
         limit: 10,
         page: 1,
@@ -180,6 +140,11 @@ describe('AccountsService', () => {
       expect(items.items.length).toEqual(accounts.length + 1)
       expect(items.items[0]).toMatchObject({
         ...itemToBeSaved,
+        user: {
+          id: user.id,
+          name: user.name,
+          created_at: user.created_at,
+        },
         created_at: expect.any(Date),
         updated_at: expect.any(Date),
         deleted_at: null,
@@ -195,10 +160,12 @@ describe('AccountsService', () => {
       const user = await setUpUserForUserId(userRepository)
       expect(user).toHaveProperty('id') // sanity check
 
-      const item = await service.create(itemToBeSaved, user.id)
+      const item = await service.create(itemToBeSaved as any, user.id)
+      delete itemToBeSaved.userId
 
       expect(item).toMatchObject({
         ...itemToBeSaved,
+        user: { id: user.id },
         created_at: expect.any(Date),
         updated_at: expect.any(Date),
         deleted_at: null,
@@ -211,7 +178,7 @@ describe('AccountsService', () => {
       const itemToBeSaved = generateFakeAccount()
 
       try {
-        await service.create(itemToBeSaved, randomUUID())
+        await service.create(itemToBeSaved as any, randomUUID())
       } catch (err) {
         expect(err).toBeInstanceOf(NotFoundException)
         expect(err.message).toEqual(ErrorMessages.USER_DOES_NOT_EXIST)
@@ -229,9 +196,11 @@ describe('AccountsService', () => {
         userId: user.id,
       })
 
-      const item = await service.create(itemToBeSaved, user.id)
+      const item = await service.create(itemToBeSaved as any, user.id)
+      delete itemToBeSaved.userId
       expect(item).toMatchObject({
         ...itemToBeSaved,
+        user: { id: user.id },
         created_at: expect.any(Date),
         updated_at: expect.any(Date),
         deleted_at: null,
@@ -247,33 +216,13 @@ describe('AccountsService', () => {
     })
 
     it('Should fail to update account if it doesnt exist', async () => {
-      const user = await setUpUserForUserId(userRepository)
-      expect(user).toHaveProperty('id') // sanity check
-      const itemToBeSaved = generateFakeAccount({
-        userId: user.id,
-      })
-
-      const item = repository.create(itemToBeSaved)
-      expect(item).toMatchObject({
-        ...itemToBeSaved,
-        created_at: expect.any(Date),
-        updated_at: expect.any(Date),
-        deleted_at: null,
-      })
-      expect(item).toHaveProperty('id')
-      expect(item).toHaveProperty('created_at')
-
-      const itemToBeUpdated = generateFakeAccount({
-        userId: undefined,
-      })
+      const id = randomUUID()
       try {
-        await service.update(item.id, itemToBeUpdated as any)
+        await service.update(id, {} as any)
       } catch (err) {
         expect(err.message.includes('Successfully Updated')).toBeFalsy()
         expect(err).toBeInstanceOf(NotFoundException)
-        expect(err.message).toEqual(
-          ErrorMessages.NOT_FOUND_ID('account', item.id),
-        )
+        expect(err.message).toEqual(ErrorMessages.NOT_FOUND_ID('account', id))
         expect(err.status).toEqual(404)
         expect(err.options.description).toEqual(ErrorCodes.NOT_FOUND)
       }
@@ -283,8 +232,13 @@ describe('AccountsService', () => {
       const user = await setUpUserForUserId(userRepository)
       expect(user).toHaveProperty('id') // sanity check
 
+      jest.spyOn(databaseService, 'doInTransaction')
+
       const itemToBeSaved = generateFakeAccount()
-      const item = await service.create(itemToBeSaved, user.id)
+
+      const item = await service.create(itemToBeSaved as any, user.id)
+      delete itemToBeSaved.userId
+
       expect(item).toMatchObject({
         ...itemToBeSaved,
         created_at: expect.any(Date),
@@ -294,6 +248,7 @@ describe('AccountsService', () => {
       expect(item).toHaveProperty('id')
 
       const oldItem = await service.switchStatus(item.id)
+
       expect(oldItem).toMatchObject({
         ...itemToBeSaved,
         active: !item.active,
@@ -303,15 +258,6 @@ describe('AccountsService', () => {
       })
 
       expect(databaseService.doInTransaction).toHaveBeenCalledTimes(1)
-      expect(databaseService.update).toHaveBeenCalledTimes(1)
-      expect(databaseService.findOne).toHaveBeenCalledWith(Account, {
-        where: { id: item.id },
-      })
-      expect(databaseService.update).toHaveBeenCalledWith(
-        Account,
-        { id: item.id },
-        { active: !item.active },
-      )
     })
   })
 
@@ -319,29 +265,34 @@ describe('AccountsService', () => {
     const user = await setUpUserForUserId(userRepository)
     expect(user).toHaveProperty('id') // sanity check
 
-    const itemToBeSaved = generateFakeAccount()
-    const item = await service.create(itemToBeSaved, user.id)
-    expect(item).toMatchObject({
-      ...itemToBeSaved,
-      created_at: expect.any(Date),
-      updated_at: expect.any(Date),
-      deleted_at: null,
+    const itemToBeSaved = generateFakeAccount({
+      userId: user.id,
     })
+    const item = await repository.save(repository.create(itemToBeSaved))
+    delete itemToBeSaved.userId
     expect(item).toHaveProperty('id')
+    expect(item.deleted_at).toBeFalsy()
 
-    repository.createQueryBuilder = createQueryBuilder as any
-    getOne = jest.fn().mockReturnValue({
-      ...item,
-      deleted_at: new Date(),
-      user: {
-        id: user.id,
-        name: user.name,
-        created_at: user.created_at,
+    const response = await service.remove(item.id)
+    expect(response.message.includes('Successfully Deleted')).toBeTruthy()
+
+    const deletedItem = await repository.findOne({
+      where: {
+        id: item.id,
       },
+      withDeleted: true,
     })
-    const oldItem = await service.remove(item.id)
-    expect(oldItem.message.includes('Successfully Deleted')).toBeTruthy()
-    const deletedItem = await service.findOne(item.id)
+    expect(deletedItem).toHaveProperty('id')
     expect(deletedItem?.deleted_at).toBeTruthy()
+    try {
+      await service.findOne(item.id)
+    } catch (err) {
+      expect(err).toBeInstanceOf(NotFoundException)
+      expect(err.message).toEqual(
+        ErrorMessages.NOT_FOUND_ID('account', item.id),
+      )
+      expect(err.status).toEqual(404)
+      expect(err.options.description).toEqual(ErrorCodes.NOT_FOUND)
+    }
   })
 })
