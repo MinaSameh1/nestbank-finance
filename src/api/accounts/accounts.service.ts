@@ -69,25 +69,10 @@ export class AccountsService {
 
   async findAll(pagination: Pagination): Promise<PaginatedDto<Account>> {
     this.logger.debug('Finding all accountss')
-    const [items, total] = await this.accountsRepository
-      .createQueryBuilder('account')
-      .skip(pagination.skip)
-      .take(pagination.limit)
-      .innerJoin('account.user', 'user')
-      .select([
-        'account.id',
-        'account.type',
-        'account.active',
-        'account.balance',
-        'account.account_number',
-        'account.updated_at',
-        'account.created_at',
-        'account.deleted_at',
-        'user.id',
-        'user.name',
-        'user.created_at',
-      ])
-      .getManyAndCount()
+    const [items, total] = await Account.getAccounts({
+      limit: pagination.limit,
+      skip: pagination.skip,
+    })
 
     return {
       total,
@@ -98,24 +83,8 @@ export class AccountsService {
 
   async findOne(id: ID) {
     this.logger.debug(`Finding account with id: ${id}`)
-    const account = await this.accountsRepository
-      .createQueryBuilder('account')
-      .innerJoin('account.user', 'user')
-      .select([
-        'account.id',
-        'account.type',
-        'account.active',
-        'account.balance',
-        'account.account_number',
-        'account.updated_at',
-        'account.created_at',
-        'account.deleted_at',
-        'user.id',
-        'user.name',
-        'user.created_at',
-      ])
-      .where('account.id = :id', { id })
-      .getOne()
+    const account = await Account.getAccount(id)
+
     if (!account) {
       throw new NotFoundException(ErrorMessages.NOT_FOUND_ID('account', id), {
         description: ErrorCodes.NOT_FOUND,
@@ -159,7 +128,7 @@ export class AccountsService {
     }
   }
 
-  async switchStatus(id: ID) {
+  async switchStatus(id: ID): Promise<Account> {
     this.logger.debug(`Switching status of account with id: ${id}`)
     return this.databaseService.doInTransaction(
       async (manager): Promise<Account> => {
@@ -177,33 +146,17 @@ export class AccountsService {
         return {
           ...account,
           active: !account.active,
-        }
+        } as Account
       },
     )
   }
 
   async findManyByUser(userId: ID, pagination: Pagination) {
     this.logger.debug(`Finding accounts for user with id: ${userId}`)
-    const [accounts, total] = await this.accountsRepository
-      .createQueryBuilder('account')
-      .skip(pagination.skip)
-      .take(pagination.limit)
-      .innerJoin('account.user', 'user')
-      .select([
-        'account.id',
-        'account.type',
-        'account.active',
-        'account.balance',
-        'account.account_number',
-        'account.updated_at',
-        'account.created_at',
-        'account.deleted_at',
-        'user.id',
-        'user.name',
-        'user.created_at',
-      ])
-      .where('user.id = :userId', { userId })
-      .getManyAndCount()
+    const [accounts, total] = await Account.getAccountsWithUser(userId, {
+      limit: pagination.limit,
+      skip: pagination.skip,
+    })
 
     return {
       total: total,

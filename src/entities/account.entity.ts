@@ -49,4 +49,82 @@ export class Account extends AbstractEntity {
   static fromPartial(data: DeepPartial<Account>): Account {
     return Object.assign(new Account(), data)
   }
+
+  static getAccounts({
+    limit,
+    skip,
+  }: {
+    limit?: number
+    skip?: number
+  }): Promise<[Account[], number]> {
+    return Account.createQueryBuilder('account')
+      .innerJoinAndSelect('account.user', 'user')
+      .select([
+        'account.id',
+        'account.type',
+        'account.active',
+        'account.balance',
+        'account.account_number',
+        'account.updated_at',
+        'account.created_at',
+        'account.deleted_at',
+        'user.id',
+        'user.name',
+        'user.created_at',
+      ])
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount()
+  }
+
+  static getAccount(id: string): Promise<Account | null> {
+    return Account.createQueryBuilder('account')
+      .innerJoinAndSelect('account.user', 'user')
+      .select([
+        'account.id',
+        'account.type',
+        'account.active',
+        'account.balance',
+        'account.account_number',
+        'account.updated_at',
+        'account.created_at',
+        'account.deleted_at',
+        'user.id',
+        'user.name',
+        'user.created_at',
+      ])
+      .where('account.id = :id', { id })
+      .getOne()
+  }
+
+  static getAccountsWithUser(
+    userId: string,
+    {
+      limit,
+      skip,
+    }: {
+      limit?: number
+      skip?: number
+    },
+  ): Promise<[Account[], number]> {
+    return Account.createQueryBuilder('account')
+      .innerJoinAndSelect('account.user', 'user')
+      .select([
+        'account.id',
+        'account.type',
+        'account.active',
+        'account.balance',
+        'account.account_number',
+        'account.updated_at',
+        'account.created_at',
+        'account.deleted_at',
+        'user.id',
+        'user.name',
+        'user.created_at',
+      ])
+      .skip(skip)
+      .take(limit)
+      .where('user.id = :userId', { userId })
+      .getManyAndCount()
+  }
 }
