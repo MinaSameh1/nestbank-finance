@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/@angular-devkit/schematics/collection-schema.json",
+  "schematics": {
+    "readyresource": {
+      "factory": "./template/resource/resource.factory#main",
+      "description": "Create a Nest resource With Repository according to mahaseel standards.",
+      "schema": "./template/resource/resource.schema.json",
+      "aliases": ["rres"]
+    }
+  }
+}
